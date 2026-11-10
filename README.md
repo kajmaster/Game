@@ -14,6 +14,8 @@ dependencies) and wrapped for Android with Capacitor.
 - **Walls bounce.** Landing a bounce shot scores a bonus. Skipping a planet scores for each one skipped.
 - A **red tide** rises from below, so you cannot wait forever.
 - Later zones add drifting planets, mines and smaller, faster rings.
+- Every new planet rings one step higher than the last. It is a **Shepard tone**, so the pitch keeps
+  climbing for the whole run without ever topping out.
 - Collect **stardust** to unlock comets or to continue a run once. Missions and a daily reward give more.
 
 ## Project layout
