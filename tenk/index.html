@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Road to 10K</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one phone column. Sticky revenue header (the scoreboard), three tabs of controls, fixed "run week" bar. */
+:root{
+  --bg:#e9edf5; --surface:#ffffff; --sunk:#dde3ee; --ink:#131a2e; --muted:#5b6682; --line:#c9d1e0;
+  --accent:#2742f5; --on-accent:#ffffff; --accent-soft:#dfe4ff;
+  --good:#0b8a55; --warn:#b26a00; --bad:#c8322b; --good-soft:#d9f2e6; --bad-soft:#fbe1df; --warn-soft:#fbecd2;
+  --display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --body:"Instrument Sans","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0d1120; --surface:#171d33; --sunk:#0a0d19; --ink:#eef1fb; --muted:#99a3c2; --line:#2c3556;
+  --accent:#7f92ff; --on-accent:#0b1030; --accent-soft:#232c5c;
+  --good:#4fd39a; --warn:#f0b24e; --bad:#ff7d74; --good-soft:#123a2c; --bad-soft:#44201f; --warn-soft:#3f2f12;
+  color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0d1120; --surface:#171d33; --sunk:#0a0d19; --ink:#eef1fb; --muted:#99a3c2; --line:#2c3556;
+  --accent:#7f92ff; --on-accent:#0b1030; --accent-soft:#232c5c;
+  --good:#4fd39a; --warn:#f0b24e; --bad:#ff7d74; --good-soft:#123a2c; --bad-soft:#44201f; --warn-soft:#3f2f12;
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.45 var(--body);-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;text-align:left}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.wrap{max-width:520px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+
+/* scoreboard */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .wrap{padding-block:10px 10px;display:flex;flex-direction:column;gap:8px}
+.toprow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.brand{font:800 13px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.week{font:500 12px var(--mono);color:var(--muted)}
+.mrr{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.mrr b{font:800 44px/1 var(--display);letter-spacing:-.03em}
+.mrr small{font:500 13px var(--body);color:var(--muted)}
+.delta{font:700 12px var(--mono);padding:2px 7px;border-radius:99px}
+.delta.up{background:var(--good-soft);color:var(--good)} .delta.down{background:var(--bad-soft);color:var(--bad)}
+.track{position:relative;height:10px;border-radius:99px;background:var(--sunk);margin-bottom:16px}
+.track i{position:absolute;inset:0 auto 0 0;border-radius:99px;background:var(--accent);transition:width .5s ease}
+.track span{position:absolute;top:13px;transform:translateX(-50%);font:500 10px var(--mono);color:var(--muted);white-space:nowrap}
+.track span::before{content:"";position:absolute;left:50%;top:-13px;width:1px;height:10px;background:var(--line)}
+.track span.hit{color:var(--accent)} .track span:last-child{transform:translateX(-100%)} .track span:last-child::before{left:100%}
+.vitals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.vital{min-width:0} .vital label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.vital b{font:700 15px var(--mono)} .vital em{font:500 11px var(--body);font-style:normal;color:var(--muted)}
+.vital .low{color:var(--bad)}
+.bar{height:5px;border-radius:9px;background:var(--sunk);margin-top:5px;overflow:hidden} .bar i{display:block;height:100%;background:var(--good);transition:width .4s}
+.bar.mid i{background:var(--warn)} .bar.low i{background:var(--bad)}
+
+/* tabs */
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--sunk);border-radius:12px;padding:4px;margin-top:12px}
+.tabs button{text-align:center;padding:8px 4px;border-radius:9px;font-weight:600;font-size:14px;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink)}
+main.wrap{padding-block:0 120px;display:flex;flex-direction:column;gap:14px}
+h2{font:700 13px var(--display);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
+.panel{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border-radius:var(--r);padding:14px}
+.note{font-size:13px;color:var(--muted);margin:0}
+
+/* last week */
+.recap{display:flex;flex-direction:column;gap:8px}
+.recap .chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:700 12px var(--mono);padding:3px 8px;border-radius:99px;background:var(--sunk)}
+.chip.g{background:var(--good-soft);color:var(--good)} .chip.b{background:var(--bad-soft);color:var(--bad)} .chip.w{background:var(--warn-soft);color:var(--warn)}
+.recap ul{margin:0;padding-left:18px;font-size:13px;color:var(--muted)}
+
+/* plan */
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slot{min-height:54px;border-radius:12px;border:1.5px dashed var(--line);padding:8px 10px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;justify-content:center;min-width:0}
+.slot.full{border:1.5px solid var(--accent);background:var(--accent-soft);color:var(--ink);font-weight:600}
+.slot small{font-weight:400;font-size:11px;color:var(--muted)}
+.acts{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.act{background:var(--surface);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:4px;min-width:0;border:1.5px solid transparent;transition:transform .08s}
+.act:active{transform:scale(.97);border-color:var(--accent)}
+.act[disabled]{opacity:.45}
+.act .cat{font:700 10px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.cat.Product{color:var(--accent)} .cat.Growth{color:var(--good)} .cat.Money{color:var(--warn)} .cat.You{color:var(--bad)}
+.act strong{font:700 16px/1.15 var(--display)}
+.act p{margin:0;font-size:12.5px;color:var(--muted);line-height:1.35}
+.act .cost{font:500 11px var(--mono);color:var(--muted);margin-top:auto;padding-top:4px}
+
+/* company */
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.row + .row{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.row .txt{min-width:0} .row .txt strong{display:block;font-weight:600} .row .txt span{font-size:12.5px;color:var(--muted)}
+.btn{flex:none;text-align:center;padding:9px 14px;border-radius:10px;font-weight:600;font-size:14px;background:var(--accent);color:var(--on-accent)}
+.btn.ghost{background:var(--sunk);color:var(--ink)} .btn[disabled]{opacity:.4}
+.btn.on{background:var(--good-soft);color:var(--good)}
+.price{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.price b{font:800 32px var(--display)} .price b small{font:500 13px var(--body);color:var(--muted)}
+.step{width:44px;height:44px;border-radius:12px;background:var(--sunk);text-align:center;font:700 22px var(--mono)}
+.step[disabled]{opacity:.35}
+.meter{display:grid;grid-template-columns:84px 1fr 40px;align-items:center;gap:10px;font-size:13px}
+.meter .bar{margin:0;height:7px} .meter b{font:700 13px var(--mono);text-align:right}
+.meters{display:flex;flex-direction:column;gap:9px}
+
+/* numbers */
+svg{display:block;width:100%;height:auto}
+.kv{display:grid;grid-template-columns:1fr auto;gap:6px 12px;font-size:14px} .kv span{color:var(--muted)} .kv b{font:700 13px var(--mono);text-align:right}
+.log{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.log b{font:500 11px var(--mono);color:var(--ink);margin-right:6px}
+
+/* run bar */
+.run{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.run .wrap{padding-block:10px}
+.go{display:block;width:100%;text-align:center;padding:15px;border-radius:14px;background:var(--accent);color:var(--on-accent);font:700 17px var(--display)}
+.go:active{transform:scale(.985)}
+
+/* sheets */
+.veil{position:fixed;inset:0;z-index:20;background:rgba(8,10,24,.62);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);color:var(--ink);width:100%;max-width:520px;border-radius:22px 22px 0 0;max-height:92%;overflow:auto;
+  padding:22px max(18px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
+  display:flex;flex-direction:column;gap:12px;animation:rise .22s ease-out}
+@keyframes rise{from{transform:translateY(30px);opacity:.4}}
+@media (prefers-reduced-motion: reduce){ .sheet{animation:none} .track i,.bar i{transition:none} }
+.sheet .eyebrow{font:700 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.sheet h1{font:800 28px/1.08 var(--display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.sheet p{margin:0;color:var(--muted)}
+.sheet ol{margin:0;padding-left:20px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.opt{display:block;width:100%;padding:13px 14px;border-radius:13px;background:var(--sunk)}
+.opt strong{display:block;font-weight:600} .opt span{font-size:12.5px;color:var(--muted)}
+.opt:active{background:var(--accent-soft)}
+.big{font:800 54px/1 var(--display);letter-spacing:-.03em}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;background:var(--ink);color:var(--bg);
+  padding:10px 14px;border-radius:12px;font-size:13.5px;max-width:min(88vw,440px);text-align:center}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap" id="top"></div></header>
+<main class="wrap">
+  <div class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-tab="plan" id="tab-plan">This week</button>
+    <button role="tab" data-tab="co" id="tab-co">Company</button>
+    <button role="tab" data-tab="num" id="tab-num">Numbers</button>
+  </div>
+  <div id="panel" class="panel"></div>
+</main>
+<div class="run"><div class="wrap"><button class="go" id="go"></button></div></div>
+<div id="modal"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(function(){
+'use strict';
+/* ---------- engine (no DOM) ---------- */
+var GOAL=10000, PRICES=[9,19,29,49,79,99,149], SLOTS=3;
+var rng=Math.random;
+function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
+function pr(x){var f=Math.floor(x);return f+(rng()<x-f?1:0);}
+function money(n){var a=Math.abs(Math.round(n));return (n<0?'-':'')+'$'+a.toLocaleString('en-US');}
+
+var ACTIONS=[
+ {id:'build',cat:'Product',name:'Ship a feature',desc:'Better product, a few new bugs. Works best with fresh insight.',en:-14},
+ {id:'fix',cat:'Product',name:'Fix bugs',desc:'Fewer bugs means fewer cancellations.',en:-9},
+ {id:'talk',cat:'Product',name:'Call customers',desc:'Gain insight for your next features. Calms churn this week.',en:-6},
+ {id:'content',cat:'Growth',name:'Write content',desc:'Adds visitors every week from now on.',en:-11},
+ {id:'ads',cat:'Growth',name:'Run ads',desc:'A burst of visitors this week only.',en:-4,cash:-300},
+ {id:'outreach',cat:'Growth',name:'Cold outreach',desc:'Sign a few customers by hand.',en:-13},
+ {id:'freelance',cat:'Money',name:'Freelance gig',desc:'Cash now. Does nothing for the company.',en:-16,cash:700},
+ {id:'rest',cat:'You',name:'Take time off',desc:'Recover energy before you burn out.',en:32}
+];
+var ACT={};ACTIONS.forEach(function(a){ACT[a.id]=a;});
+var TEAM=[
+ {id:'dev',name:'Developer',pay:900,desc:'Improves the product and clears bugs every week.'},
+ {id:'mkt',name:'Marketer',pay:700,desc:'Grows your audience weekly. Ads bring 40% more visitors.'},
+ {id:'sup',name:'Support rep',pay:450,desc:'Cuts churn by 30% and handles up to 400 customers.'}
+];
+var UPS=[
+ {id:'landing',name:'Landing page redesign',cost:900,desc:'25% more visitors sign up.'},
+ {id:'onboard',name:'Onboarding emails',cost:1400,desc:'15% less churn.'},
+ {id:'annual',name:'Annual plans',cost:1800,desc:'20% less churn.'},
+ {id:'referral',name:'Referral program',cost:2200,desc:'Customers bring in new customers every week.'}
+];
+
+function newGame(){
+  return {v:1,week:1,cash:8000,cust:0,price:19,product:10,bugs:5,audience:20,insight:0,energy:100,
+    team:{},ups:{},plan:[],hist:[0],log:[],fixed:500,priceCd:0,debt:false,over:null,lastEvent:0,seen:{},
+    last:null,event:null,carry:0,bonusV:0,burnout:false,adsUsed:0,spent:0,peak:0};
+}
+function mrr(s){return s.cust*s.price;}
+function value(s){return 12+s.product*1.1;}
+function conv(s){
+  return 0.007*(0.35+s.product/55)*clamp(1.45-s.price/value(s),0.04,1.25)*(s.ups.landing?1.25:1)*(1+Math.min(s.insight,40)/200);
+}
+function churn(s,talked){
+  var c=0.028+s.bugs*0.0006-s.product*0.00015+Math.max(0,s.price/value(s)-1)*0.05;
+  var cap=s.team.sup?400:60;
+  if(s.cust>cap)c+=Math.min(0.03,0.01*(s.cust/cap-1));
+  if(s.team.sup)c*=0.7; if(s.ups.onboard)c*=0.85; if(s.ups.annual)c*=0.8; if(talked)c*=0.85;
+  return Math.max(0.006,c);
+}
+function salaries(s){var t=0;TEAM.forEach(function(m){if(s.team[m.id])t+=m.pay;});return t;}
+function weeklyCosts(s){return s.fixed+salaries(s)+Math.round(s.cust*0.5);}
+function weeklyNet(s){return Math.round(mrr(s)/4)-weeklyCosts(s);}
+function priceLoss(s,np){
+  if(np<=s.price)return 0;
+  return clamp(0.2*(np/s.price-1)+Math.max(0,np/value(s)-0.9)*0.5,0,0.85);
+}
+function setPrice(s,np){
+  if(s.priceCd>0||np===s.price)return null;
+  var lost=pr(s.cust*priceLoss(s,np));
+  s.cust-=lost;s.price=np;s.priceCd=4;
+  var m='Price set to $'+np+'.'+(lost?' '+lost+' customers left over it.':'');
+  note(s,m);return m;
+}
+function note(s,t){s.log.unshift({w:s.week,t:t});if(s.log.length>40)s.log.pop();}
+
+var EVENTS=[
+ {id:'custom',cond:function(s){return s.cust>=5;},title:'A big lead wants a custom feature',
+  text:'An agency will bring their whole team over if you build one thing just for them.',
+  opts:[{l:'Build it for them',h:'+8 customers, +14 bugs, costs energy',f:function(s){s.cust+=8;s.bugs+=14;s.energy-=15;return 'The agency signed. 8 new customers, and a pile of hacks in the code.';}},
+        {l:'Say no, stay focused',h:'+8 insight',f:function(s){s.insight+=8;return 'You passed, and learned what agencies need.';}}]},
+ {id:'outage',rep:true,cond:function(s){return s.cust>=10;},title:'The servers are down',
+  text:'It is 2 a.m. and the status page is red. Customers are emailing.',
+  opts:[{l:'Pull an all-nighter',h:'-28 energy, nobody leaves',f:function(s){s.energy-=28;return 'Back online by sunrise. You are wrecked.';}},
+        {l:'Fix it in the morning',h:'Lose about 8% of customers',f:function(s){var n=pr(s.cust*0.08);s.cust-=n;return n+' customers cancelled over the outage.';}}]},
+ {id:'influencer',cond:function(s){return s.cash>=1200;},title:'A newsletter offers a sponsored slot',
+  text:'20,000 readers in your niche. They want $600.',
+  opts:[{l:'Pay $600',h:'About 700 extra visitors next week',f:function(s){s.cash-=600;s.bonusV+=700;return 'Slot booked. Traffic lands next week.';}},
+        {l:'Pass',h:'Keep the cash',f:function(){return 'You kept the $600.';}}]},
+ {id:'competitor',cond:function(s){return s.cust>=15&&s.price>9;},title:'A competitor launches a free plan',
+  text:'Your inbox fills with "why should I pay you?"',
+  opts:[{l:'Drop your price one step',h:'Keeps everyone, lowers revenue',f:function(s){var i=PRICES.indexOf(s.price);s.price=PRICES[Math.max(0,i-1)];return 'You cut the price to $'+s.price+'.';}},
+        {l:'Hold the price',h:'Lose about 6% of customers',f:function(s){var n=pr(s.cust*0.06);s.cust-=n;return n+' customers switched to the free tool.';}}]},
+ {id:'launch',cond:function(s){return s.product>=35;},title:'Launch day?',
+  text:'The product feels ready for a big public launch on the maker sites.',
+  opts:[{l:'Launch this week',h:'A wave of visitors, -20 energy',f:function(s){var v=Math.round(s.product*16);s.bonusV+=v;s.energy-=20;s.audience+=30;return 'Launched. About '+v+' people are coming to look.';}},
+        {l:'Not yet',h:'Nothing changes',f:function(){return 'You held the launch back.';}}]},
+ {id:'angel',cond:function(s){return s.week>=8&&s.cust>=10;},title:'An angel investor wants in',
+  text:'$25,000 now. They expect an office, a lawyer and monthly reports.',
+  opts:[{l:'Take the money',h:'+$25,000, fixed costs +$250 a week',f:function(s){s.cash+=25000;s.fixed+=250;return 'The wire landed. So did the overhead.';}},
+        {l:'Stay bootstrapped',h:'Nothing changes',f:function(){return 'You kept 100% of the company.';}}]},
+ {id:'viral',rep:true,cond:function(s){return s.audience>=60;},title:'One of your posts is taking off',
+  text:'Replies are pouring in faster than you can read them.',
+  opts:[{l:'Reply to everyone',h:'Big traffic spike, -12 energy',f:function(s){s.bonusV+=650;s.energy-=12;s.audience+=20;return 'You rode the wave. Traffic spikes next week.';}},
+        {l:'Let it run',h:'Smaller spike',f:function(s){s.bonusV+=280;return 'A nice bump of visitors is on the way.';}}]},
+ {id:'tax',cond:function(s){return s.week>=10;},title:'Tax paperwork is due',
+  text:'The letter has been on your desk for three weeks.',
+  opts:[{l:'Hire an accountant',h:'-$700',f:function(s){s.cash-=700;return 'Filed. $700 well spent.';}},
+        {l:'Do it yourself',h:'-22 energy',f:function(s){s.energy-=22;return 'Filed at midnight. Never again.';}}]},
+ {id:'trip',cond:function(s){return s.energy<45;},title:'Friends invite you away for the weekend',
+  text:'You look tired, they say.',
+  opts:[{l:'Go',h:'+35 energy, -$200',f:function(s){s.energy+=35;s.cash-=200;return 'You came back with ideas and a sunburn.';}},
+        {l:'Stay and work',h:'+6 product',f:function(s){s.product+=6;return 'You shipped a weekend project instead.';}}]},
+ {id:'billing',cond:function(s){return s.cust>=25;},title:'A billing bug double-charged people',
+  text:'Nobody has noticed yet.',
+  opts:[{l:'Refund and apologise',h:'Costs 15% of one month, earns goodwill',f:function(s){var c=Math.round(mrr(s)*0.15);s.cash-=c;s.audience+=25;return 'Refunded '+money(c)+'. People shared how you handled it.';}},
+        {l:'Fix it quietly',h:'Lose about 5% of customers when they notice',f:function(s){var n=pr(s.cust*0.05);s.cust-=n;return 'They noticed. '+n+' customers left.';}}]},
+ {id:'podcast',cond:function(s){return s.week>=5;},title:'A podcast wants you as a guest',
+  text:'Small show, loyal listeners.',
+  opts:[{l:'Record it',h:'+45 audience, -10 energy',f:function(s){s.audience+=45;s.energy-=10;return 'Good episode. Listeners keep trickling in.';}},
+        {l:'Decline',h:'Nothing changes',f:function(){return 'You stayed heads-down.';}}]},
+ {id:'requests',cond:function(s){return s.cust>=20;},title:'Feature requests are piling up',
+  text:'Forty open requests and counting.',
+  opts:[{l:'Run a roadmap vote',h:'+15 insight',f:function(s){s.insight+=15;return 'Three requests clearly matter. Now you know what to build.';}},
+        {l:'Build the loudest one',h:'+5 product, +6 bugs',f:function(s){s.product+=5;s.bugs+=6;return 'Shipped. The loudest customer is happy.';}}]},
+ {id:'exit',cond:function(s){return mrr(s)>=3000&&mrr(s)<8000;},title:'Someone wants to buy the company',
+  text:function(s){return 'A bigger player offers '+money(mrr(s)*30)+' in cash. You would walk away before reaching $10k.';},
+  opts:[{l:'Sell and walk away',h:'Ends the game',f:function(s){s.over='sold';s.exit=mrr(s)*30;return 'Sold.';}},
+        {l:'Keep building',h:'The goal is still $10k',f:function(){return 'You turned the offer down.';}}]}
+];
+var EV={};EVENTS.forEach(function(e){EV[e.id]=e;});
+
+function rollEvent(s){
+  if(s.week<3||s.week-s.lastEvent<2||rng()>0.5)return;
+  var ok=EVENTS.filter(function(e){return e.cond(s)&&(!s.seen[e.id]||(e.rep&&s.week-s.seen[e.id]>10));});
+  if(!ok.length)return;
+  var e=ok[Math.floor(rng()*ok.length)];
+  s.event=e.id;s.seen[e.id]=s.week;s.lastEvent=s.week;
+}
+function resolveEvent(s,i){
+  var e=EV[s.event];if(!e)return '';
+  var out=e.opts[i].f(s);
+  s.event=null;s.product=clamp(s.product,0,100);s.energy=clamp(s.energy,0,100);s.cust=Math.max(0,s.cust);
+  s.hist[s.hist.length-1]=mrr(s);
+  note(s,e.title+': '+out);
+  if(!s.over&&mrr(s)>=GOAL)s.over='won';
+  return out;
+}
+
+function runWeek(s){
+  if(s.over||s.event)return;
+  var plan=s.burnout?['rest','rest','rest']:s.plan.slice(0,SLOTS);
+  var lines=[],m0=mrr(s),cash0=s.cash,talked=false,adV=0,direct=0;
+  if(s.burnout){lines.push('Burned out. You spent the week in bed.');s.burnout=false;}
+  plan.forEach(function(id){
+    var a=ACT[id],eff=s.energy<25&&id!=='rest'?0.5:1,tired=eff<1?' (exhausted, half effect)':'';
+    s.energy+=a.en; if(a.cash)s.cash+=a.cash;
+    if(id==='build'){var g=(3+Math.min(s.insight,12)*0.45)*(1-s.product/115)*eff;s.product+=g;s.bugs+=5;s.insight=Math.max(0,s.insight-6);lines.push('Shipped a feature: product +'+g.toFixed(1)+tired);}
+    else if(id==='fix'){var b=Math.min(s.bugs,14*eff);s.bugs-=b;lines.push('Fixed bugs: -'+Math.round(b)+tired);}
+    else if(id==='talk'){s.insight=Math.min(100,s.insight+12*eff);talked=true;lines.push('Customer calls: insight +'+Math.round(12*eff)+tired);}
+    else if(id==='content'){var au=Math.round((12+s.product*0.2)*eff);s.audience+=au;lines.push('Published content: +'+au+' weekly visitors'+tired);}
+    else if(id==='ads'){var v=Math.round(250*(s.team.mkt?1.4:1)*eff);adV+=v;lines.push('Ads: '+v+' visitors for $300'+tired);}
+    else if(id==='outreach'){var n=pr((0.6+rng()*1.6)*(0.5+s.product/50)*(s.price>=79?0.6:1)*eff);direct+=n;lines.push('Outreach: '+n+' signed'+tired);}
+    else if(id==='freelance'){lines.push('Freelance gig: +$700');}
+    else if(id==='rest'){}
+  });
+  for(var i=plan.length;i<SLOTS;i++)s.energy+=10;
+  if(s.team.dev){s.product+=2.5*(1-s.product/120);s.bugs=Math.max(0,s.bugs-3);}
+  if(s.team.mkt)s.audience+=25;
+  s.product=clamp(s.product,0,100);
+
+  var visitors=Math.round(s.audience+s.cust*0.4+adV+s.bonusV); s.bonusV=0;
+  var raw=visitors*conv(s)*(0.8+rng()*0.4)+(s.ups.referral?s.cust*0.006:0)+s.carry;
+  var signups=Math.floor(raw); s.carry=raw-signups;
+  var added=signups+direct, cr=churn(s,talked), lost=Math.min(s.cust,pr(s.cust*cr));
+  s.cust+=added-lost;
+  var income=Math.round(mrr(s)/4), costs=weeklyCosts(s);
+  s.cash+=income-costs;
+  s.audience*=0.975; s.insight=Math.max(0,s.insight-1); s.bugs=clamp(s.bugs+1+s.cust/150,0,100);
+  s.energy=Math.min(100,s.energy+8);
+  if(s.energy<=0){s.energy=35;s.burnout=true;lines.push('You hit the wall. Next week is lost to burnout.');}
+  if(s.cash<0){
+    if(!s.debt){s.debt=true;s.cash+=5000;s.fixed+=150;lines.push('Out of cash. You maxed a credit card: +$5,000, and $150 a week in repayments.');}
+    else s.over='broke';
+  }
+  var m1=mrr(s); s.hist.push(m1); s.peak=Math.max(s.peak,m1);
+  s.last={week:s.week,added:added,lost:lost,visitors:visitors,dm:m1-m0,dc:s.cash-cash0,lines:lines,churn:cr};
+  if(s.priceCd>0)s.priceCd--;
+  s.plan=[];
+  if(!s.over&&m1>=GOAL)s.over='won';
+  if(!s.over){s.week++;rollEvent(s);}
+}
+
+/* ---------- UI ---------- */
+var KEY='road-to-10k-v1', S, tab='plan', $=function(id){return document.getElementById(id);};
+function load(){try{var j=JSON.parse(localStorage.getItem(KEY));if(j&&j.v===1)return j;}catch(e){}return null;}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function best(){try{return +localStorage.getItem(KEY+'-best')||0;}catch(e){return 0;}}
+function setBest(w){try{var b=best();if(!b||w<b)localStorage.setItem(KEY+'-best',w);}catch(e){}}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+var toastT;
+function toast(t){var el=$('toast');el.textContent=t;el.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){el.hidden=true;},3200);}
+
+function renderTop(){
+  var m=mrr(S),d=S.last?S.last.dm:0,net=weeklyNet(S),run=net<0?Math.floor(S.cash/-net):null;
+  var e=Math.round(S.energy),ec=e<25?'low':e<50?'mid':'';
+  var marks=[[2000,'$2k ramen'],[5000,'$5k quit job'],[10000,'$10k']];
+  $('top').innerHTML=
+   '<div class="toprow"><span class="brand">Road to 10K</span><span class="week">WEEK '+S.week+'</span></div>'+
+   '<div class="mrr"><b>'+money(m)+'</b><small>monthly recurring revenue</small>'+(d?'<span class="delta '+(d>0?'up':'down')+'">'+(d>0?'+':'')+money(d)+'</span>':'')+'</div>'+
+   '<div class="track"><i style="width:'+clamp(m/GOAL*100,0,100)+'%"></i>'+marks.map(function(k){return '<span class="'+(m>=k[0]?'hit':'')+'" style="left:'+k[0]/GOAL*100+'%">'+k[1]+'</span>';}).join('')+'</div>'+
+   '<div class="vitals">'+
+    '<div class="vital"><label>Cash</label><b class="'+(S.cash<1500?'low':'')+'">'+money(S.cash)+'</b><br><em>'+(run===null?'+'+money(net)+'/wk':run+' wk runway')+'</em></div>'+
+    '<div class="vital"><label>Customers</label><b>'+S.cust+'</b><br><em>at $'+S.price+'/mo</em></div>'+
+    '<div class="vital"><label>Energy</label><b class="'+(e<25?'low':'')+'">'+e+'</b><div class="bar '+ec+'"><i style="width:'+e+'%"></i></div></div>'+
+   '</div>';
+}
+function recap(){
+  var l=S.last;if(!l)return '<div class="card"><p class="note"><strong style="color:var(--ink)">You quit your job with $8,000 and a half-built app.</strong> Pick up to three things to do each week, then run the week. Reach $10,000 a month before the money runs out.</p></div>';
+  return '<div class="card recap"><h2 style="margin:0">Week '+l.week+' results</h2><div class="chips">'+
+    '<span class="chip g">+'+l.added+' customers</span>'+(l.lost?'<span class="chip b">-'+l.lost+' cancelled</span>':'')+
+    '<span class="chip">'+l.visitors+' visitors</span>'+
+    '<span class="chip '+(l.dc>=0?'g':'w')+'">cash '+(l.dc>=0?'+':'')+money(l.dc)+'</span></div>'+
+    (l.lines.length?'<ul>'+l.lines.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>':'')+'</div>';
+}
+function panelPlan(){
+  var h=recap();
+  if(S.burnout)return h+'<div class="card"><p class="note"><strong style="color:var(--bad)">Burned out.</strong> You cannot work this week. Run the week to recover.</p></div>';
+  h+='<h2>Your week: '+S.plan.length+' of '+SLOTS+' planned</h2><div class="slots">';
+  for(var i=0;i<SLOTS;i++){var id=S.plan[i];
+    h+=id?'<button class="slot full" data-rm="'+i+'" aria-label="Remove '+ACT[id].name+'">'+ACT[id].name+'<small>tap to remove</small></button>':'<div class="slot">Free slot<small>light rest</small></div>';}
+  h+='</div>';
+  if(S.energy<25)h+='<p class="note" style="color:var(--bad)">You are exhausted. Work has half its effect until energy is back above 25.</p>';
+  h+='<div class="acts">'+ACTIONS.map(function(a){
+    var cost=(a.en>0?'+':'')+a.en+' energy'+(a.cash?' · '+(a.cash>0?'+':'')+money(a.cash):'');
+    return '<button class="act" data-act="'+a.id+'"'+(S.plan.length>=SLOTS?' disabled':'')+'><span class="cat '+a.cat+'">'+a.cat+'</span><strong>'+a.name+'</strong><p>'+a.desc+'</p><span class="cost">'+cost+'</span></button>';
+  }).join('')+'</div>';
+  return h;
+}
+function meter(name,v,max,cls){return '<div class="meter"><span>'+name+'</span><div class="bar '+(cls||'')+'"><i style="width:'+clamp(v/max*100,0,100)+'%"></i></div><b>'+Math.round(v)+'</b></div>';}
+function panelCo(){
+  var i=PRICES.indexOf(S.price),locked=S.priceCd>0,up=PRICES[i+1],loss=up?Math.round(priceLoss(S,up)*100):0;
+  var fair=value(S);
+  var h='<h2>Pricing</h2><div class="card"><div class="price"><button class="step" data-price="-1" aria-label="Lower price"'+(locked||i===0?' disabled':'')+'>-</button>'+
+    '<b>$'+S.price+'<small> /month</small></b><button class="step" data-price="1" aria-label="Raise price"'+(locked||!up?' disabled':'')+'>+</button></div>'+
+    '<p class="note" style="margin-top:10px">Customers feel the product is worth about <strong style="color:var(--ink)">$'+Math.round(fair)+'</strong>. Price above that and signups dry up while churn climbs. '+
+    (locked?'You can change the price again in '+S.priceCd+' weeks.':up?'Raising to $'+up+' would lose about '+loss+'% of customers.':'')+'</p></div>';
+  h+='<h2>Product health</h2><div class="card meters">'+meter('Product',S.product,100)+meter('Bugs',S.bugs,60,S.bugs>30?'low':S.bugs>15?'mid':'')+meter('Insight',S.insight,40)+meter('Audience',S.audience,Math.max(500,S.audience))+'</div>';
+  h+='<h2>Team</h2><div class="card">'+TEAM.map(function(m){var on=S.team[m.id];
+    return '<div class="row"><div class="txt"><strong>'+m.name+' <span class="num">'+money(m.pay)+'/wk</span></strong><span>'+m.desc+'</span></div><button class="btn '+(on?'on':'')+'" data-hire="'+m.id+'">'+(on?'Hired':'Hire')+'</button></div>';}).join('')+
+    '<p class="note" style="margin-top:12px">Tap a hired teammate to let them go.</p></div>';
+  h+='<h2>One-time upgrades</h2><div class="card">'+UPS.map(function(u){var own=S.ups[u.id];
+    return '<div class="row"><div class="txt"><strong>'+u.name+'</strong><span>'+u.desc+'</span></div><button class="btn '+(own?'on':'')+'" data-up="'+u.id+'"'+(own||S.cash<u.cost?' disabled':'')+'>'+(own?'Owned':money(u.cost))+'</button></div>';}).join('')+'</div>';
+  h+='<button class="btn ghost" data-restart="1" style="align-self:center;margin-top:6px">Start over</button>';
+  return h;
+}
+function chart(){
+  var H=S.hist,W=320,Ht=130,L=38,R=8,T=10,B=20,max=Math.max(1000,Math.ceil(Math.max.apply(null,H)/1000)*1000),n=Math.max(1,H.length-1);
+  var x=function(i){return L+(W-L-R)*i/n;},y=function(v){return T+(Ht-T-B)*(1-v/max);};
+  var pts=H.map(function(v,i){return x(i).toFixed(1)+','+y(v).toFixed(1);});
+  var grid='';[0,max/2,max].forEach(function(v){grid+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--line)" stroke-width="1"/><text x="'+(L-5)+'" y="'+(y(v)+3.5)+'" text-anchor="end" font-size="9" fill="var(--muted)" font-family="var(--mono)">$'+(v/1000)+'k</text>';});
+  return '<svg viewBox="0 0 '+W+' '+Ht+'" role="img" aria-label="MRR by week">'+grid+
+    '<polygon fill="var(--accent-soft)" points="'+x(0)+','+y(0)+' '+pts.join(' ')+' '+x(n)+','+y(0)+'"/>'+
+    '<polyline fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" points="'+pts.join(' ')+'"/>'+
+    '<circle cx="'+x(n)+'" cy="'+y(H[H.length-1])+'" r="3.5" fill="var(--accent)"/>'+
+    '<text x="'+L+'" y="'+(Ht-5)+'" font-size="9" fill="var(--muted)" font-family="var(--mono)">start</text>'+
+    '<text x="'+(W-R)+'" y="'+(Ht-5)+'" text-anchor="end" font-size="9" fill="var(--muted)" font-family="var(--mono)">week '+H.length+'</text></svg>';
+}
+function panelNum(){
+  var cr=churn(S,false),mc=1-Math.pow(1-cr,4.33),inc=Math.round(mrr(S)/4);
+  var h='<h2>MRR so far</h2><div class="card">'+chart()+'</div>';
+  h+='<h2>Funnel</h2><div class="card kv"><span>Visitors per week (steady)</span><b>'+Math.round(S.audience+S.cust*0.4)+'</b><span>Visitor to customer</span><b>'+(conv(S)*100).toFixed(2)+'%</b><span>Churn per month</span><b>'+(mc*100).toFixed(1)+'%</b><span>Customers still needed at $'+S.price+'</span><b>'+Math.max(0,Math.ceil(GOAL/S.price)-S.cust)+'</b></div>';
+  h+='<h2>Weekly money</h2><div class="card kv"><span>Revenue</span><b>+'+money(inc)+'</b><span>Living and tools</span><b>-'+money(S.fixed)+'</b><span>Salaries</span><b>-'+money(salaries(S))+'</b><span>Hosting</span><b>-'+money(Math.round(S.cust*0.5))+'</b><span><strong style="color:var(--ink)">Net per week</strong></span><b>'+(weeklyNet(S)>=0?'+':'')+money(weeklyNet(S))+'</b></div>';
+  h+='<h2>History</h2><div class="card">'+(S.log.length?'<ul class="log">'+S.log.map(function(l){return '<li><b>W'+l.w+'</b>'+esc(l.t)+'</li>';}).join('')+'</ul>':'<p class="note">Decisions and events will be listed here.</p>')+'</div>';
+  return h;
+}
+function sheet(html){$('modal').innerHTML='<div class="veil"><div class="sheet" role="dialog" aria-modal="true">'+html+'</div></div>';}
+function renderModal(){
+  if(S.over){
+    var w=S.hist.length-1,b=best(),h;
+    if(S.over==='won'){
+      var rank=w<=40?'Rocket ship':w<=55?'Indie legend':w<=80?'Steady builder':'Stubborn survivor';
+      h='<span class="eyebrow">You made it</span><div class="big">'+money(mrr(S))+'</div><h1>$10k a month in '+w+' weeks.</h1><p>Rank: <strong style="color:var(--ink)">'+rank+'</strong>. '+S.cust+' customers at $'+S.price+', '+money(S.cash)+' in the bank.'+(b?' Your best is '+b+' weeks.':'')+'</p>';
+    }else if(S.over==='sold'){
+      h='<span class="eyebrow">Acquired</span><div class="big">'+money(S.exit)+'</div><h1>You sold in week '+w+'.</h1><p>A good payday, but the $10k milestone belongs to someone else now.</p>';
+    }else{
+      h='<span class="eyebrow">Out of money</span><div class="big">'+money(mrr(S))+'</div><h1>The company ran dry in week '+w+'.</h1><p>Your peak was '+money(S.peak)+' a month. Most founders need a second attempt.</p>';
+    }
+    sheet(h+'<button class="go" data-restart="now">Play again</button>');return;
+  }
+  if(S.event){var e=EV[S.event],tx=typeof e.text==='function'?e.text(S):e.text;
+    sheet('<span class="eyebrow">Week '+S.week+' · decision</span><h1>'+e.title+'</h1><p>'+tx+'</p>'+e.opts.map(function(o,i){return '<button class="opt" data-opt="'+i+'"><strong>'+o.l+'</strong><span>'+o.h+'</span></button>';}).join(''));return;}
+  $('modal').innerHTML='';
+}
+function render(){
+  renderTop();
+  ['plan','co','num'].forEach(function(t){$('tab-'+t).setAttribute('aria-selected',t===tab);});
+  $('panel').innerHTML=tab==='plan'?panelPlan():tab==='co'?panelCo():panelNum();
+  $('go').textContent=S.burnout?'Recover this week':S.plan.length?'Run week '+S.week:'Run week '+S.week+' (rest)';
+  renderModal();
+}
+function restartSheet(){sheet('<span class="eyebrow">Start over</span><h1>Throw this company away?</h1><p>Your current run will be lost.</p><button class="go" data-restart="now">Start a new company</button><button class="opt" data-close="1"><strong>Keep playing</strong></button>');}
+
+document.addEventListener('click',function(ev){
+  var t=ev.target.closest('button');if(!t)return;var d=t.dataset;
+  if(d.tab){tab=d.tab;window.scrollTo(0,0);}
+  else if(d.act){if(S.plan.length<SLOTS)S.plan.push(d.act);}
+  else if(d.rm){S.plan.splice(+d.rm,1);}
+  else if(t.id==='go'){runWeek(S);tab='plan';window.scrollTo(0,0);if(S.over==='won')setBest(S.hist.length-1);}
+  else if(d.opt){toast(resolveEvent(S,+d.opt));if(S.over==='won')setBest(S.hist.length-1);}
+  else if(d.price){var m=setPrice(S,PRICES[PRICES.indexOf(S.price)+ +d.price]);if(m)toast(m);}
+  else if(d.hire){var on=S.team[d.hire]=!S.team[d.hire];var tm=TEAM.filter(function(x){return x.id===d.hire;})[0];note(S,(on?'Hired a ':'Let go of the ')+tm.name.toLowerCase()+'.');}
+  else if(d.up){var u=UPS.filter(function(x){return x.id===d.up;})[0];if(!S.ups[u.id]&&S.cash>=u.cost){S.cash-=u.cost;S.ups[u.id]=true;note(S,'Bought: '+u.name+'.');toast(u.name+' is live.');}}
+  else if(d.restart==='now'){S=newGame();tab='plan';}
+  else if(d.restart){restartSheet();return;}
+  else if(d.close){}
+  else return;
+  save();render();
+});
+
+function start(data){
+  S=(data&&data.S)||load()||newGame();
+  render();
+}
+window.TENK={newGame:newGame,runWeek:runWeek,resolveEvent:resolveEvent,setPrice:setPrice,mrr:mrr,value:value,conv:conv,churn:churn,weeklyNet:weeklyNet,UPS:UPS,PRICES:PRICES,get state(){return S;}};
+var hot=window.claude&&window.claude.hot;
+if(hot&&hot.snapshot)hot.snapshot(function(){return {S:S};});
+if(hot&&hot.ready)hot.ready(start);else start(hot&&hot.data||{});
+})();
+</script>
+</body>
+</html>

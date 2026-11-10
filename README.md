@@ -16,6 +16,15 @@ dependencies) and wrapped for Android with Capacitor.
 - Later zones add drifting planets, mines and smaller, faster rings.
 - Collect **stardust** to unlock comets or to continue a run once. Missions and a daily reward give more.
 
+## Also in this repo: Road to 10K
+
+`tenk/index.html` is a second, separate game: a week-by-week business sim for phones. You quit your job
+with $8,000 and a half-built app, plan three things a week (ship, fix, call customers, write, advertise,
+sell, freelance, rest), set the price, hire, and handle surprise decisions. You win at $10,000 monthly
+recurring revenue and lose if the cash runs out twice. It is one self-contained file: open it in any
+browser. `npm run test:tenk` has bots play
+1,200 runs to check the balance and taps through the real interface.
+
 ## Project layout
 
 | Path | What it is |

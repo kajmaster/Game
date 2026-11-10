@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node tools/serve.js",
     "test": "NODE_PATH=$(npm root -g) node tools/playtest.js",
+    "test:tenk": "NODE_PATH=$(npm root -g) node tools/tenk-playtest.js",
     "assets": "node tools/make-assets.js",
     "sync": "cap sync android",
     "android:debug": "cap sync android && cd android && ./gradlew assembleDebug",
