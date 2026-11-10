@@ -10,6 +10,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HAS_UPLOAD_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' && secrets.ANDROID_KEYSTORE_PASSWORD != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,14 +24,60 @@ jobs:
           java-version: 21
       - run: npm ci
       - run: npx cap sync android
-      - name: Build debug APK and release bundle
+
+      - name: Build debug APK
         working-directory: android
-        run: ./gradlew --no-daemon assembleDebug bundleRelease
+        run: ./gradlew --no-daemon assembleDebug
       - uses: actions/upload-artifact@v4
         with:
           name: loopstar-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      # With the two repository secrets set, the release bundle is signed with your upload key
+      # and can go straight to Play Console.
+      - name: Build signed release bundle
+        if: env.HAS_UPLOAD_KEY == 'true'
+        working-directory: android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          LOOPSTAR_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          LOOPSTAR_KEYSTORE_FILE: ${{ runner.temp }}/upload.p12
+        run: |
+          printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | base64 --decode > "$LOOPSTAR_KEYSTORE_FILE"
+          ./gradlew --no-daemon bundleRelease
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab | tee verify.txt
+          grep -q "jar verified" verify.txt
+          rm -f "$LOOPSTAR_KEYSTORE_FILE"
       - uses: actions/upload-artifact@v4
+        if: env.HAS_UPLOAD_KEY == 'true'
+        with:
+          name: loopstar-release-bundle-signed
+          path: android/app/build/outputs/bundle/release/app-release.aab
+
+      # Without the secrets: build the bundle unsigned, then prove the signing setup still works by
+      # signing a second copy with a throwaway key. That copy is checked and discarded, never uploaded.
+      - name: Build unsigned release bundle
+        if: env.HAS_UPLOAD_KEY != 'true'
+        working-directory: android
+        run: |
+          ./gradlew --no-daemon bundleRelease
+          mkdir -p "$RUNNER_TEMP/unsigned"
+          mv app/build/outputs/bundle/release/app-release.aab "$RUNNER_TEMP/unsigned/app-release-unsigned.aab"
+      - uses: actions/upload-artifact@v4
+        if: env.HAS_UPLOAD_KEY != 'true'
         with:
           name: loopstar-release-bundle-unsigned
-          path: android/app/build/outputs/bundle/release/app-release.aab
+          path: ${{ runner.temp }}/unsigned/app-release-unsigned.aab
+      - name: Check the signing setup with a throwaway key
+        if: env.HAS_UPLOAD_KEY != 'true'
+        working-directory: android
+        env:
+          LOOPSTAR_KEYSTORE_PASSWORD: throwaway-test-password
+          LOOPSTAR_KEYSTORE_FILE: ${{ runner.temp }}/throwaway.p12
+        run: |
+          keytool -genkeypair -storetype PKCS12 -keystore "$LOOPSTAR_KEYSTORE_FILE" -alias upload \
+            -keyalg RSA -keysize 2048 -validity 1 -storepass "$LOOPSTAR_KEYSTORE_PASSWORD" -dname "CN=Loopstar signing self-test"
+          ./gradlew --no-daemon bundleRelease
+          jarsigner -verify app/build/outputs/bundle/release/app-release.aab | tee verify.txt
+          grep -q "jar verified" verify.txt
+          rm -f app/build/outputs/bundle/release/app-release.aab "$LOOPSTAR_KEYSTORE_FILE"

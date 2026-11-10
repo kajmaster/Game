@@ -1,5 +1,10 @@
 apply plugin: 'com.android.application'
 
+// Release signing is switched on by environment variables so the key never lives in the repository.
+// LOOPSTAR_KEYSTORE_FILE: absolute path to a PKCS12 keystore holding the upload key under the alias "upload".
+// LOOPSTAR_KEYSTORE_PASSWORD: its password. Without these the release bundle is built unsigned.
+def loopstarKeystore = System.getenv("LOOPSTAR_KEYSTORE_FILE")
+
 android {
     namespace = "com.kajmaster.loopstar"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +21,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (loopstarKeystore) {
+                storeFile file(loopstarKeystore)
+                storeType "pkcs12"
+                storePassword System.getenv("LOOPSTAR_KEYSTORE_PASSWORD")
+                keyAlias "upload"
+                keyPassword System.getenv("LOOPSTAR_KEYSTORE_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
+            if (loopstarKeystore) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

@@ -22,9 +22,10 @@ dependencies) and wrapped for Android with Capacitor.
 | --- | --- |
 | `www/` | The whole game: `index.html`, `style.css`, `game.js`, icons, font, PWA manifest and service worker |
 | `android/` | Capacitor Android project (package `com.kajmaster.loopstar`, portrait, full screen) |
-| `store/` | Play Store material: 512 px icon, feature graphic, 1080x1920 screenshots, listing text, privacy policy |
+| `store/` | Play Store material: 512 px icon, feature graphic, 1080x1920 screenshots, listing text |
+| `docs/` | Small website served by GitHub Pages: landing page and the privacy policy |
 | `tools/` | Local server, automated playtest, asset generator, single-file bundler |
-| `.github/workflows/android.yml` | Builds a debug APK and an unsigned release bundle on every push |
+| `.github/workflows/android.yml` | Builds a debug APK and the release bundle on every push (signed once the key is set up) |
 
 ## Run it locally
 
@@ -56,16 +57,62 @@ npm run android:bundle     # android/app/build/outputs/bundle/release/app-releas
 No Android Studio? Every push runs the **Android build** workflow; download the APK from the run's
 artifacts on GitHub and install it on a phone.
 
+## Signed release builds
+
+Google Play only accepts a bundle signed with your own **upload key**. The key stays out of this
+repository: you create it once on your computer and store it as two GitHub secrets. From then on every
+build produces `loopstar-release-bundle-signed`, ready to upload.
+
+**1. Create the key** (needs Java, which provides `keytool`). Choose a strong password when asked:
+
+```bash
+keytool -genkeypair -v -storetype PKCS12 -keystore loopstar-upload.p12 -alias upload \
+  -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Loopstar"
+```
+
+The alias must be `upload`. Keep `loopstar-upload.p12` and its password somewhere safe, with a backup,
+and never commit them.
+
+**2. Turn the key file into text** so it fits in a secret:
+
+```bash
+base64 -w0 loopstar-upload.p12 > key.txt        # Linux
+base64 -i loopstar-upload.p12 -o key.txt        # macOS
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("loopstar-upload.p12")) > key.txt   # Windows PowerShell
+```
+
+**3. Add two secrets** on GitHub under *Settings > Secrets and variables > Actions > New repository secret*:
+
+| Secret name | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | the full contents of `key.txt` |
+| `ANDROID_KEYSTORE_PASSWORD` | the password you chose |
+
+Delete `key.txt` afterwards.
+
+**4. Run the build** (push a commit, or *Actions > Android build > Run workflow*) and download
+`loopstar-release-bundle-signed` from the run.
+
+Until the secrets exist, the build uploads an unsigned bundle and checks the signing setup with a
+throwaway key that is discarded. To sign on your own computer instead, set `LOOPSTAR_KEYSTORE_FILE`
+(absolute path to the `.p12`) and `LOOPSTAR_KEYSTORE_PASSWORD`, then run `npm run android:bundle`.
+
+## Privacy policy page
+
+`docs/` is a small website for GitHub Pages. To publish it: *Settings > Pages > Build and deployment >
+Deploy from a branch*, choose `main` and the `/docs` folder, and save. After a minute or two the policy
+is at `https://kajmaster.github.io/Game/privacy.html`. Add your contact email in `docs/privacy.html`
+(look for the `CONTACT` comment) before you link it in Play Console.
+
 ## Publish to Google Play
 
 1. Create a Play Console developer account (one-time fee, identity verification).
 2. Decide the final package name **before the first upload**; it can never change afterwards. It is set in
    `capacitor.config.json` and `android/app/build.gradle` (plus the Java package folder).
-3. Create an upload keystore and sign the release bundle. The simplest route is Android Studio:
-   *Build > Generate Signed App Bundle*. Keep the keystore and its passwords safe and out of git.
-4. Create the app in Play Console and upload the `.aab`. Use the text in `store/listing.md` and the
-   graphics in `store/`.
-5. Host `store/privacy-policy.md` at a public URL, add your contact email to it, and link it in the listing.
+3. Set up the upload key as described under *Signed release builds*.
+4. Create the app in Play Console and upload the signed `.aab`. Accept Play App Signing when asked. Use the
+   text in `store/listing.md` and the graphics in `store/`.
+5. Publish the privacy policy page (above) and link it in the listing.
 6. Fill in the content rating questionnaire and the data safety form (the game collects no data).
 7. New personal developer accounts must run a closed test (currently 12 testers for 14 days) before
    Google allows a production release.

@@ -1,0 +1,16 @@
+:root { --ink: #070a1c; --star: #f4f1ff; --mute: #a3a8d0; --amber: #ffc24b; --line: rgba(255, 255, 255, .14); color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: linear-gradient(170deg, #0a0d2c, #2a1245) fixed var(--ink); color: var(--star); font: 17px/1.6 "Avenir Next", "Segoe UI", Roboto, system-ui, sans-serif; min-height: 100vh; }
+main { max-width: 38rem; margin: 0 auto; padding: 3rem max(1.25rem, env(safe-area-inset-right, 0px)) 4rem max(1.25rem, env(safe-area-inset-left, 0px)); }
+h1 { font-size: 2.3rem; line-height: 1.1; letter-spacing: -.02em; margin: .4rem 0 .2rem; text-wrap: balance; }
+h2 { font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; color: var(--amber); margin: 2.2rem 0 .4rem; }
+p, ul { margin: .5rem 0; }
+ul { padding-left: 1.2rem; }
+a { color: var(--amber); }
+a:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+.back { font-size: .8rem; letter-spacing: .14em; text-transform: uppercase; text-decoration: none; }
+.date { color: var(--mute); font-size: .9rem; }
+.lead { font-size: 1.2rem; }
+.todo { border: 1px dashed var(--line); border-radius: 12px; padding: .7rem 1rem; color: var(--mute); }
+.home { text-align: center; padding-top: 5rem; }
+.home img { border-radius: 24%; }
