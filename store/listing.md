@@ -23,4 +23,4 @@ Fly into the next planet's ring and it catches you. Miss, and you burn out. That
 **Category**: Game / Arcade
 **Content rating**: expected Everyone (no violence, no user content, no purchases)
 **Graphics**: `icon-512.png`, `feature-graphic-1024x500.png`, `screenshots/` (1080x1920)
-**Privacy policy**: `https://kajmaster.github.io/Game/privacy.html` once GitHub Pages is switched on (source: `docs/privacy.html`). Add your contact email to that page first.
+**Privacy policy**: `https://kajmaster.github.io/Game/privacy.html` once GitHub Pages is switched on (source: `docs/privacy.html`).

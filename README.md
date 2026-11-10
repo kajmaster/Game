@@ -101,8 +101,8 @@ throwaway key that is discarded. To sign on your own computer instead, set `LOOP
 
 `docs/` is a small website for GitHub Pages. To publish it: *Settings > Pages > Build and deployment >
 Deploy from a branch*, choose `main` and the `/docs` folder, and save. After a minute or two the policy
-is at `https://kajmaster.github.io/Game/privacy.html`. Add your contact email in `docs/privacy.html`
-(look for the `CONTACT` comment) before you link it in Play Console.
+is at `https://kajmaster.github.io/Game/privacy.html`. Link that address in Play Console. The contact
+email shown on the page is set in `docs/privacy.html`.
 
 ## Publish to Google Play
 
