@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Loopstar</title>
+<meta name="description" content="Sling a comet from planet to planet. One tap, endless orbit-hopping.">
+<meta name="theme-color" content="#070a1c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--BODY-->
+<div id="app">
+  <div id="stage">
+    <canvas id="c" aria-label="Loopstar game"></canvas>
+
+    <div id="hud">
+      <button id="pauseBtn" class="iconbtn" aria-label="Pause" hidden><span class="bars"></span></button>
+      <div id="scoreWrap" hidden>
+        <div id="score">0</div>
+        <div id="mult"></div>
+      </div>
+      <div id="gemBox"><i class="gem"></i><span id="gems">0</span></div>
+    </div>
+
+    <div id="toast" role="status"></div>
+    <div id="hint" hidden>Tap to launch<small>Aim for the next ring</small></div>
+
+    <section id="home" class="screen">
+      <div class="brand">
+        <div class="orbitmark" aria-hidden="true"><span></span></div>
+        <h1>LOOP<br>STAR</h1>
+        <p class="tag">Sling from planet to planet. Don't burn out.</p>
+      </div>
+      <div class="homebottom">
+        <div class="best">Best <b id="homeBest">0</b></div>
+        <button id="playBtn" class="btn primary big">Play</button>
+        <nav class="navrow">
+          <button class="btn ghost" data-open="skins">Comets</button>
+          <button class="btn ghost" data-open="missions">Missions</button>
+          <button class="btn ghost" data-open="settings">Settings</button>
+        </nav>
+      </div>
+    </section>
+
+    <section id="paused" class="modal" hidden>
+      <div class="card">
+        <h2>Paused</h2>
+        <button id="resumeBtn" class="btn primary">Resume</button>
+        <button id="quitBtn" class="btn ghost">End run</button>
+      </div>
+    </section>
+
+    <section id="over" class="sheet" hidden>
+      <div class="sheetbody">
+        <div id="newBest" class="badge" hidden>New best</div>
+        <div class="overscore" id="overScore">0</div>
+        <div class="overmeta"><span>Best <b id="overBest">0</b></span><span class="gemline"><i class="gem"></i>+<b id="overGems">0</b></span></div>
+        <ul id="overMissions" class="missions"></ul>
+        <button id="reviveBtn" class="btn mint">Continue <span class="cost"><i class="gem"></i>25</span></button>
+        <button id="againBtn" class="btn primary big">Play again</button>
+        <div class="navrow">
+          <button id="homeBtn" class="btn ghost">Home</button>
+          <button id="shareBtn" class="btn ghost">Share</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="skins" class="sheet" hidden>
+      <div class="sheetbody">
+        <header><h2>Comets</h2><button class="iconbtn close" data-close aria-label="Close"></button></header>
+        <div id="skinGrid" class="skingrid"></div>
+      </div>
+    </section>
+
+    <section id="missions" class="sheet" hidden>
+      <div class="sheetbody">
+        <header><h2>Missions</h2><button class="iconbtn close" data-close aria-label="Close"></button></header>
+        <p class="note">Finish a mission to earn stardust. A new one takes its place after the run.</p>
+        <ul id="missionList" class="missions"></ul>
+        <div class="dailyline">Daily streak <b id="streakDays">1</b> <span id="streakHint"></span></div>
+      </div>
+    </section>
+
+    <section id="settings" class="sheet" hidden>
+      <div class="sheetbody">
+        <header><h2>Settings</h2><button class="iconbtn close" data-close aria-label="Close"></button></header>
+        <label class="toggle"><span>Sound effects</span><input type="checkbox" id="optSound"><i></i></label>
+        <label class="toggle"><span>Music</span><input type="checkbox" id="optMusic"><i></i></label>
+        <label class="toggle"><span>Vibration</span><input type="checkbox" id="optHaptics"><i></i></label>
+        <h3>How to play</h3>
+        <ul class="howto">
+          <li>Your comet circles a planet. Tap to let go and fly straight.</li>
+          <li>Fly into the next planet's ring to be caught. Miss and you burn out.</li>
+          <li>Let go before one full lap to build a swift streak and multiply your score.</li>
+          <li>Walls bounce you back. Landing a bounce shot scores extra.</li>
+          <li>Keep moving. The red tide rises from below.</li>
+        </ul>
+        <button id="resetBtn" class="btn ghost danger">Reset progress</button>
+        <p class="note ver">Loopstar 1.0.0</p>
+      </div>
+    </section>
+
+    <section id="daily" class="modal" hidden>
+      <div class="card">
+        <div class="eyebrow">Daily reward</div>
+        <h2>Day <span id="dailyDay">1</span></h2>
+        <div class="dailyamt"><i class="gem"></i>+<span id="dailyAmt">10</span></div>
+        <button id="dailyBtn" class="btn primary">Collect</button>
+      </div>
+    </section>
+  </div>
+</div>
+<!--/BODY-->
+<script src="game.js"></script>
+</body>
+</html>

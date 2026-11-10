@@ -1,0 +1,9 @@
+{
+  "appId": "com.kajmaster.loopstar",
+  "appName": "Loopstar",
+  "webDir": "www",
+  "backgroundColor": "#070a1c",
+  "android": {
+    "backgroundColor": "#070a1c"
+  }
+}

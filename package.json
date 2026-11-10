@@ -1,0 +1,19 @@
+{
+  "name": "loopstar",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Loopstar - a one-tap orbit-hopping arcade game",
+  "scripts": {
+    "start": "node tools/serve.js",
+    "test": "NODE_PATH=$(npm root -g) node tools/playtest.js",
+    "assets": "node tools/make-assets.js",
+    "sync": "cap sync android",
+    "android:debug": "cap sync android && cd android && ./gradlew assembleDebug",
+    "android:bundle": "cap sync android && cd android && ./gradlew bundleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0"
+  }
+}

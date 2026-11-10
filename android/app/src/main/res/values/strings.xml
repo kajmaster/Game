@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Loopstar</string>
+    <string name="title_activity_main">Loopstar</string>
+    <string name="package_name">com.kajmaster.loopstar</string>
+    <string name="custom_url_scheme">com.kajmaster.loopstar</string>
+</resources>
