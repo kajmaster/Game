@@ -88,6 +88,27 @@ function tone(f, dur, o = {}) {
   osc.connect(g); g.connect(o.dest || master);
   osc.start(t0); osc.stop(t0 + dur + 0.03);
 }
+// Shepard tone: octave-stacked sine partials under a fixed bell-shaped loudness curve. Each step up the
+// scale sounds higher than the last, yet after seven steps the spectrum is back where it began, so the
+// pitch can keep climbing for a whole run without ever running out of room.
+const SHEP_SCALE = [0, 2, 4, 5, 7, 9, 11];
+function shepard(step, vol) {
+  if (!AC) return;
+  const t0 = AC.currentTime, p = SHEP_SCALE[((step % 7) + 7) % 7] / 12;
+  for (let k = 0; k < 7; k++) {
+    const oct = k + p;                                   // octaves above C2
+    const amp = vol * Math.exp(-0.5 * Math.pow((oct - 3.2) / 1.15, 2));
+    const f = 65.41 * Math.pow(2, oct);
+    const osc = AC.createOscillator(), g = AC.createGain();
+    osc.frequency.setValueAtTime(f * 0.965, t0);         // a quick scoop up into the note
+    osc.frequency.exponentialRampToValueAtTime(f, t0 + 0.06);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(amp, 0.0002), t0 + 0.014);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.55);
+    osc.connect(g); g.connect(master);
+    osc.start(t0); osc.stop(t0 + 0.6);
+  }
+}
 function noise(dur, vol, freq) {
   if (!AC) return;
   const src = AC.createBufferSource(), g = AC.createGain(), f = AC.createBiquadFilter();
@@ -100,13 +121,8 @@ function sfx(name, n = 0) {
   if (!AC || !S.sound) return;
   switch (name) {
     case 'launch': tone(240, 0.14, { type: 'triangle', to: 620, vol: 0.13 }); break;
-    case 'land': {
-      const hz = noteHz(5 + Math.min(n, 14));
-      tone(hz, 0.34, { type: 'triangle', vol: 0.22 });
-      tone(hz * 2, 0.22, { vol: 0.08 });
-      tone(90, 0.12, { to: 50, vol: 0.2 });
-      break;
-    }
+    case 'land': shepard(n, 0.085); tone(90, 0.12, { to: 50, vol: 0.2 }); break;
+    case 'thud': shepard(n, 0.035); tone(90, 0.12, { to: 50, vol: 0.16 }); break;
     case 'gem': tone(1250 + n * 60, 0.09, { to: 1900 + n * 60, vol: 0.09 }); break;
     case 'bounce': tone(180, 0.1, { type: 'square', to: 120, vol: 0.07 }); break;
     case 'power': [0, 1, 2, 3].forEach((i) => tone(noteHz(10 + i), 0.16, { at: i * 0.06, type: 'triangle', vol: 0.14 })); break;
@@ -309,14 +325,14 @@ function capture(p, dx, dy) {
     G.score += pts;
     track('hops', 1); track('swift', G.streak, true); track('score', G.score, true);
     floatText(p.x, p.y - p.R - 14, label, hops > 1 || c.banked ? '#ffc24b' : '#ffffff', hops > 1 || c.banked ? 19 : 16);
-    sfx('land', G.streak); buzz(hops > 1 || c.banked ? 30 : 14);
+    sfx('land', G.maxI); buzz(hops > 1 || c.banked ? 30 : 14);
     const z = Math.floor(G.maxI / ZONE_LEN);
     if (z > G.zone) { G.zone = z; toast('Zone ' + (z + 1)); G.flash = 0.5; sfx('power'); }
     bumpScore();
   } else {
     if (G.streak > 0) sfx('lost');
     G.streak = 0;
-    sfx('land', 0);
+    sfx('thud', G.maxI);
   }
   burst(c.x, c.y, 12, p.hue, 150);
   G.shake = Math.max(G.shake, 3);
